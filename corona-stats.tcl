@@ -1,5 +1,5 @@
 ##
-# corona-stats.tcl  Version 0.2  Author Stefan Wold <ratler@stderr.eu>
+# corona-stats.tcl  Version 0.3  Author Stefan Wold <ratler@stderr.eu>
 ###
 # LICENSE:
 # Copyright (C) 2020  Stefan Wold <ratler@stderr.eu>
@@ -20,7 +20,7 @@
 
 if {[namespace exists CovidStats]} {namespace delete CovidStats}
 namespace eval CovidStats {
-    variable version "0.2"
+    variable version "0.3"
     variable countryFile "scripts/corona-stats/countrylist.txt"
     variable countryMapping
 
@@ -54,7 +54,6 @@ bind pub - !corona ::CovidStats::pubGetStats
 
 # Automatic bindings and generated procs for each country
 if {[array size ::CovidStats::countryMapping] > 0} {
-    putlog "++++ wtf"
     foreach k [array names ::CovidStats::countryMapping] {
         set cmd "proc CovidStats::${k}getStats "
         set cmd [concat $cmd "{ nick host handle channel arg } {\n"]
