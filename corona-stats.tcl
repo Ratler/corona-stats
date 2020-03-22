@@ -1,5 +1,5 @@
 ##
-# corona-stats.tcl  Version 0.1  Author Stefan Wold <ratler@stderr.eu>
+# corona-stats.tcl  Version 0.2  Author Stefan Wold <ratler@stderr.eu>
 ###
 # LICENSE:
 # Copyright (C) 2020  Stefan Wold <ratler@stderr.eu>
@@ -20,7 +20,7 @@
 
 if {[namespace exists CovidStats]} {namespace delete CovidStats}
 namespace eval CovidStats {
-    variable version "0.1"
+    variable version "0.2"
     variable countryFile "scripts/corona-stats/countrylist.txt"
     variable countryMapping
 
@@ -63,7 +63,6 @@ if {[array size ::CovidStats::countryMapping] > 0} {
         set cmd [concat $cmd "puthelp \"PRIVMSG \$channel :\$data\";\n"]
         set cmd [concat $cmd "}"]
         eval $cmd
-        putlog [info body ::CovidStats::${k}getStats]
         bind pub - !corona-${k} ::CovidStats::${k}getStats
     }
 }
