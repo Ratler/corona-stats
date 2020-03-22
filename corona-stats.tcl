@@ -51,6 +51,7 @@ http::register https 443 [list ::tls::socket -autoservername true]
 # Bindings
 bind dcc - corona ::CovidStats::dccGetStats
 bind pub - !corona ::CovidStats::pubGetStats
+bind pub - !coronatop5 ::CovidStats::pubGetTop5Stats
 
 # Automatic bindings and generated procs for each country
 if {[array size ::CovidStats::countryMapping] > 0} {
@@ -58,7 +59,7 @@ if {[array size ::CovidStats::countryMapping] > 0} {
         set cmd "proc CovidStats::${k}getStats "
         set cmd [concat $cmd "{ nick host handle channel arg } {\n"]
         set cmd [concat $cmd "set countryName \[::CovidStats::urlEncode \$::CovidStats::countryMapping($k)\];\n"]
-        set cmd [concat $cmd "set data \[::CovidStats::formatOutput \[::CovidStats::getData \$countryName\]\];\n"]
+        set cmd [concat $cmd "set data \[::CovidStats::formatOutput \[::CovidStats::getData \$countryName\ \"\"]\];\n"]
         set cmd [concat $cmd "puthelp \"PRIVMSG \$channel :\$data\";\n"]
         set cmd [concat $cmd "}"]
         eval $cmd
@@ -69,11 +70,13 @@ if {[array size ::CovidStats::countryMapping] > 0} {
 ###
 # Functions
 ###
-proc CovidStats::getData { country } {
-    if {$country == "all" || $country == ""} {
+proc CovidStats::getData { country sortby } {
+    if {$country == ""} {
         set res [::rest::get https://corona.lmao.ninja/all []]
+    } elseif {$country == "all"} {
+        set res [::rest::get https://corona.lmao.ninja/countries sort=$sortby]
     } else {
-        set res [::rest::get https://corona.lmao.ninja/countries/$country []]
+        set res [::rest::get https://corona.lmao.ninja/countries/$country {}]
     }
 
     set res [::rest::format_json $res]
@@ -81,8 +84,38 @@ proc CovidStats::getData { country } {
 }
 
 proc CovidStats::pubGetStats { nick host handle channel arg } {
-    set data [::CovidStats::formatOutput [::CovidStats::getData $arg]]
+    set data [::CovidStats::formatOutput [::CovidStats::getData $arg ""]]
     puthelp "PRIVMSG $channel :$data"
+}
+
+proc CovidStats::pubGetTop5Stats { nick host handle channel arg } {
+    set validSortOptions [list cases todayCases deaths todayDeaths recovered active critical casesPerOneMillion]
+
+    if {$arg == "help"} {
+        puthelp "PRIVMSG $channel :$nick: Valid sort options are: [join $validSortOptions ", "]"
+        return
+    }
+
+    if {$arg != "" && [lsearch -exact $validSortOptions $arg] == -1} {
+        puthelp "PRIVMSG $channel :$nick: Invalid sort option '$arg'. Valid options are: [join $validSortOptions ", "]"
+        return
+    } elseif {$arg == ""} {
+        set arg "cases"
+    }
+
+    set data [::CovidStats::getData all $arg]
+    set response "Covid-19 stats (Top 5 - $arg): "
+    #set c 0
+
+    for {set c 0} {$c < 5} {incr c} {
+        set stats [lindex $data $c]
+        append response "[expr $c + 1]. [dict get $stats country]: [dict get $stats $arg]"
+        if {$c < 4} {
+            append response " - "
+        }
+    }
+
+    puthelp "PRIVMSG $channel :$response"
 }
 
 proc CovidStats::formatOutput { data } {
@@ -102,7 +135,7 @@ proc CovidStats::formatOutput { data } {
 }
 
 proc CovidStats::dccGetStats { nick idx arg } {
-    set data [CovidStats::getData $arg]
+    set data [CovidStats::getData $arg ""]
     putidx $idx [::CovidStats::formatOutput $data]
 }
 
