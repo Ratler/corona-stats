@@ -1,5 +1,5 @@
 ##
-# corona-stats.tcl  Version 0.3  Author Stefan Wold <ratler@stderr.eu>
+# corona-stats.tcl  Version 0.4  Author Stefan Wold <ratler@stderr.eu>
 ###
 # LICENSE:
 # Copyright (C) 2020  Stefan Wold <ratler@stderr.eu>
@@ -20,7 +20,7 @@
 
 if {[namespace exists CovidStats]} {namespace delete CovidStats}
 namespace eval CovidStats {
-    variable version "0.3"
+    variable version "0.4"
     variable countryFile "scripts/corona-stats/countrylist.txt"
     variable countryMapping
 
