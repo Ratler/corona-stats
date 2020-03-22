@@ -21,18 +21,52 @@
 if {[namespace exists CovidStats]} {namespace delete CovidStats}
 namespace eval CovidStats {
     variable version "0.1"
+    variable countryFile "scripts/corona-stats/countrylist.txt"
+    variable countryMapping
+
+    if {[file exists $::CovidStats::countryFile]} {
+        set fd [open $::CovidStats::countryFile r]
+        while { ![eof $fd] } {
+            gets $fd line
+            if {[regexp {^[a-z]{2}} $line]} {
+                regexp -nocase {^([a-z]{2})[[:space:]]+(.*)} $line -> alpha2 country
+                set ::CovidStats::countryMapping($alpha2) $country
+            }
+        }
+        close $fd
+        putlog "Country list loaded with [array size ::CovidStats::countryMapping] entries"
+    }
+
 }
 
 # Packages
 package require Tcl 8.5
 package require http
 package require tls
-package require rest 1.3.1
+package require rest
+
+# Setup TLS
 http::register https 443 [list ::tls::socket -autoservername true]
 
 # Bindings
 bind dcc - corona ::CovidStats::dccGetStats
 bind pub - !corona ::CovidStats::pubGetStats
+
+# Automatic bindings and generated procs for each country
+if {[array size ::CovidStats::countryMapping] > 0} {
+    putlog "++++ wtf"
+    foreach k [array names ::CovidStats::countryMapping] {
+        set cmd "proc CovidStats::${k}getStats "
+        set cmd [concat $cmd "{ nick host handle channel arg } {\n"]
+        set cmd [concat $cmd "set countryName \[::CovidStats::urlEncode \$::CovidStats::countryMapping($k)\];\n"]
+        set cmd [concat $cmd "set data \[::CovidStats::formatOutput \[::CovidStats::getData \$countryName\]\];\n"]
+        set cmd [concat $cmd "puthelp \"PRIVMSG \$channel :\$data\";\n"]
+        set cmd [concat $cmd "}"]
+        eval $cmd
+        putlog [info body ::CovidStats::${k}getStats]
+        bind pub - !corona-${k} ::CovidStats::${k}getStats
+    }
+}
 
 ###
 # Functions
@@ -72,6 +106,13 @@ proc CovidStats::formatOutput { data } {
 proc CovidStats::dccGetStats { nick idx arg } {
     set data [CovidStats::getData $arg]
     putidx $idx [::CovidStats::formatOutput $data]
+}
+
+proc CovidStats::urlEncode {str} {
+    set uStr [encoding convertto utf-8 $str]
+    set chRE {[^-A-Za-z0-9._~\n]}
+    set replacement {%[format "%02X" [scan "\\\0" "%c"]]}
+    return [string map {"\n" "%0A"} [subst [regsub -all $chRE $uStr $replacement]]]
 }
 
 putlog "\002Corona (Covid-19) Statistics v$CovidStats::version\002 by Ratler loaded"
