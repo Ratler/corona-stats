@@ -21,26 +21,31 @@
 if {[namespace exists CovidStats]} {namespace delete CovidStats}
 namespace eval CovidStats {
     variable version "0.4"
-    variable countryFile "scripts/corona-stats/countrylist.txt"
+    variable files
+    set files(countryFile) "scripts/corona-stats/countrylist.txt"
+    set files(usStatesFile) "scripts/corona-stats/states.txt"
     variable countryMapping
+    variable usStatesMapping
+    variable cache
 
-    if {[file exists $::CovidStats::countryFile]} {
-        set fd [open $::CovidStats::countryFile r]
-        while { ![eof $fd] } {
-            gets $fd line
-            if {[regexp {^[a-z]{2}} $line]} {
-                regexp -nocase {^([a-z]{2})[[:space:]]+(.*)} $line -> alpha2 country
-                set ::CovidStats::countryMapping($alpha2) $country
+    foreach i [list country usStates] {
+        if {[file exists $::CovidStats::files(${i}File)]} {
+            set fd [open $::CovidStats::files(${i}File) r]
+            while { ![eof $fd] } {
+                gets $fd line
+                if {[regexp {^[a-z]{2}} $line]} {
+                    regexp -nocase {^([a-z]{2})[[:space:]]+(.*)} $line -> alpha2 name
+                    set ::CovidStats::${i}Mapping($alpha2) $name
+                }
             }
+            close $fd
+            putlog "corona-stats - $i list loaded with [array size ::CovidStats::${i}Mapping] entries"
         }
-        close $fd
-        putlog "Country list loaded with [array size ::CovidStats::countryMapping] entries"
     }
-
 }
 
 # Packages
-package require Tcl 8.5
+package require Tcl 8.6
 package require http
 package require tls
 package require rest
@@ -52,6 +57,7 @@ http::register https 443 [list ::tls::socket -autoservername true]
 bind dcc - corona ::CovidStats::dccGetStats
 bind pub - !corona ::CovidStats::pubGetStats
 bind pub - !coronatop5 ::CovidStats::pubGetTop5Stats
+bind pub - !coronaus ::CovidStats::pubGetUsStateStats
 
 # Automatic bindings and generated procs for each country
 if {[array size ::CovidStats::countryMapping] > 0} {
@@ -67,12 +73,25 @@ if {[array size ::CovidStats::countryMapping] > 0} {
     }
 }
 
+if {[array size ::CovidStats::usStatesMapping] > 0} {
+    foreach k [array names ::CovidStats::usStatesMapping] {
+        set cmd "proc CovidStats::${k}UsStatesGetStats "
+        set cmd [concat $cmd "{ nick host handle channel arg } {\n"]
+        set cmd [concat $cmd "set stateName \$::CovidStats::usStatesMapping($k);\n"]
+        set cmd [concat $cmd "set data \[::CovidStats::formatOutput \[::CovidStats::getUsStateData \$stateName\]\];\n"]
+        set cmd [concat $cmd "puthelp \"PRIVMSG \$channel :\$data\";\n"]
+        set cmd [concat $cmd "}"]
+        eval $cmd
+        bind pub - !coronaus-${k} ::CovidStats::${k}UsStatesGetStats
+    }
+}
+
 ###
 # Functions
 ###
 proc CovidStats::getData { country sortby } {
     if {$country == ""} {
-        set res [::rest::get https://corona.lmao.ninja/all []]
+        set res [::rest::get https://corona.lmao.ninja/all {}]
     } elseif {$country == "all"} {
         set res [::rest::get https://corona.lmao.ninja/countries sort=$sortby]
     } else {
@@ -83,9 +102,24 @@ proc CovidStats::getData { country sortby } {
     return $res
 }
 
+proc CovidStats::getUsStateData { state } {
+    set res [::rest::get https://corona.lmao.ninja/states {}]
+    set res [::rest::format_json $res]
+
+    foreach st $res {
+        if {[dict get $st state] == "$state"} {
+            return $st
+        }
+    }
+}
+
 proc CovidStats::pubGetStats { nick host handle channel arg } {
     set data [::CovidStats::formatOutput [::CovidStats::getData $arg ""]]
     puthelp "PRIVMSG $channel :$data"
+}
+
+proc CovidStats::pubGetUsStateStats { nick host handle channel state } {
+    set data [::CovidStats::]
 }
 
 proc CovidStats::pubGetTop5Stats { nick host handle channel arg } {
@@ -124,6 +158,11 @@ proc CovidStats::formatOutput { data } {
             set $var [dict get $data $var]
         }
         set res "Covid-19 stats - Total - Cases: $cases - Deaths: $deaths - Recovered: $recovered - Updated: [clock format [string range $updated 0 end-3] -format {%Y-%m-%d %R}]"
+    } elseif {[dict exists $data state]} {
+        foreach {var} [list state cases todayCases deaths todayDeaths recovered active] {
+            set $var [dict get $data $var]
+        }
+        set res "Covid-19 stats - US: $state - Cases: $cases - Today cases: $todayCases - Deaths: $deaths - Today deaths: $todayDeaths - Recovered: $recovered - Active: $active"
     } else {
         foreach {var} [list country cases todayCases deaths todayDeaths recovered active critical casesPerOneMillion] {
             set $var [dict get $data $var]
