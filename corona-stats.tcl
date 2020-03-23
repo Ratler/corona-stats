@@ -26,7 +26,9 @@ namespace eval CovidStats {
     set files(usStatesFile) "scripts/corona-stats/states.txt"
     variable countryMapping
     variable usStatesMapping
-    variable cache
+    # Cache data - in seconds, default 3600 seconds (1h)
+    variable cacheTime 3600
+    variable cache [dict create]
 
     foreach i [list country usStates] {
         if {[file exists $::CovidStats::files(${i}File)]} {
@@ -89,22 +91,61 @@ if {[array size ::CovidStats::usStatesMapping] > 0} {
 ###
 # Functions
 ###
+proc CovidStats::setCache { cacheName data } {
+    dict set ::CovidStats::cache $cacheName time [unixtime]
+    dict set ::CovidStats::cache $cacheName data $data
+}
+
+proc CovidStats::getCache { cacheName } {
+    set res ""
+    if {[dict exists $::CovidStats::cache $cacheName time] && [expr [unixtime] - [dict get $::CovidStats::cache $cacheName time]] <= $::CovidStats::cacheTime} {
+        set res [dict get $::CovidStats::cache $cacheName data]
+    }
+    return $res
+}
+
 proc CovidStats::getData { country sortby } {
     if {$country == ""} {
         set res [::rest::get https://corona.lmao.ninja/all {}]
+        set res [::rest::format_json $res]
     } elseif {$country == "all"} {
-        set res [::rest::get https://corona.lmao.ninja/countries sort=$sortby]
+        set res [::CovidStats::getCache countryAll]
+        if {$res == ""} {
+            set res [::rest::get https://corona.lmao.ninja/countries sort=$sortby]
+            set res [::rest::format_json $res]
+            ::CovidStats::setCache countryAll $res
+        } else {
+            # Need to re-sort cached data based on $sortby
+            set x [list]
+            foreach d $res {
+                lappend x [dict get $d country]
+                lappend x [dict get $d $sortby]
+            }
+
+            set x [lsort -integer -decreasing -stride 2 -index 1 $x]
+            set res [list]
+
+            # Recreate list of dicts :)
+            foreach {k v} $x {
+                lappend res [dict create country "$k" $sortby "$v"]
+            }
+        }
     } else {
         set res [::rest::get https://corona.lmao.ninja/countries/$country {}]
+        set res [::rest::format_json $res]
     }
 
-    set res [::rest::format_json $res]
     return $res
 }
 
 proc CovidStats::getUsStateData { state } {
-    set res [::rest::get https://corona.lmao.ninja/states {}]
-    set res [::rest::format_json $res]
+    set res [::CovidStats::getCache usState]
+
+    if {$res == ""} {
+        set res [::rest::get https://corona.lmao.ninja/states {}]
+        set res [::rest::format_json $res]
+        ::CovidStats::setCache usState $res
+    }
 
     foreach st $res {
         if {[dict get $st state] == "$state"} {
