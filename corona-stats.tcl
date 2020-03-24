@@ -24,6 +24,7 @@ namespace eval CovidStats {
     variable files
     set files(countryFile) "scripts/corona-stats/countrylist.txt"
     set files(usStatesFile) "scripts/corona-stats/states.txt"
+    variable ignoreResponseFields [list countryInfo]
     variable countryMapping
     variable usStatesMapping
     # Cache data - in seconds, default 3600 seconds (1h)
@@ -104,6 +105,24 @@ proc CovidStats::getCache { cacheName } {
     return $res
 }
 
+proc CovidStats::sortCountryData { data sortby } {
+    set x [list]
+
+    foreach d $data {
+        lappend x [dict get $d country]
+        lappend x [dict get $d $sortby]
+    }
+
+    set x [lsort -integer -decreasing -stride 2 -index 1 $x]
+    set res [list]
+
+    # Recreate list of dicts :)
+    foreach {k v} $x {
+        lappend res [dict create country "$k" $sortby "$v"]
+    }
+    return $res
+}
+
 proc CovidStats::getData { country sortby } {
     if {$country == ""} {
         set res [::rest::get https://corona.lmao.ninja/all {}]
@@ -116,19 +135,7 @@ proc CovidStats::getData { country sortby } {
             ::CovidStats::setCache countryAll $res
         } else {
             # Need to re-sort cached data based on $sortby
-            set x [list]
-            foreach d $res {
-                lappend x [dict get $d country]
-                lappend x [dict get $d $sortby]
-            }
-
-            set x [lsort -integer -decreasing -stride 2 -index 1 $x]
-            set res [list]
-
-            # Recreate list of dicts :)
-            foreach {k v} $x {
-                lappend res [dict create country "$k" $sortby "$v"]
-            }
+            set res [::CovidStats::sortCountryData $res $sortby]
         }
     } else {
         set res [::rest::get https://corona.lmao.ninja/countries/$country {}]
@@ -180,7 +187,6 @@ proc CovidStats::pubGetTop5Stats { nick host handle channel arg } {
 
     set data [::CovidStats::getData all $arg]
     set response "Covid-19 stats (Top 5 - $arg): "
-    #set c 0
 
     for {set c 0} {$c < 5} {incr c} {
         set stats [lindex $data $c]
@@ -194,24 +200,28 @@ proc CovidStats::pubGetTop5Stats { nick host handle channel arg } {
 }
 
 proc CovidStats::formatOutput { data } {
-    if {[dict exists $data updated]} {
-        foreach {var} [list cases deaths recovered updated] {
-            set $var [dict get $data $var]
+    set res "Covid-19 stats "
+
+    dict for {key value} $data {
+        if {[lsearch -exact $::CovidStats::ignoreResponseFields $key] != -1} {
+            continue
         }
-        set res "Covid-19 stats - Total - Cases: $cases - Deaths: $deaths - Recovered: $recovered - Updated: [clock format [string range $updated 0 end-3] -format {%Y-%m-%d %R}]"
-    } elseif {[dict exists $data state]} {
-        foreach {var} [list state cases todayCases deaths todayDeaths recovered active] {
-            set $var [dict get $data $var]
+        if {$key == "updated"} {
+            append res "- Updated: [clock format [string range $value 0 end-3] -format {%Y-%m-%d %R}]"
+        } elseif {$key == "country" || $key == "state"} {
+            append res "- [dict get $data $key] "
+        } else {
+            append res "- [::CovidStats::readableText $key]: [dict get $data $key] "
         }
-        set res "Covid-19 stats - US: $state - Cases: $cases - Today cases: $todayCases - Deaths: $deaths - Today deaths: $todayDeaths - Recovered: $recovered - Active: $active"
-    } else {
-        foreach {var} [list country cases todayCases deaths todayDeaths recovered active critical casesPerOneMillion] {
-            set $var [dict get $data $var]
-        }
-        set res "Covid-19 stats - $country - Cases: $cases - Today cases: $todayCases - Deaths: $deaths - Today deaths: $todayDeaths - Recovered: $recovered - Active: $active - Critical: $critical - Cases per one million: $casesPerOneMillion"
     }
 
     return $res
+}
+
+proc CovidStats::readableText { text } {
+    set words [regexp -all -inline {[a-z]+|[A-Z][a-z]*} $text]
+    set words [lmap word $words {string totitle $word}]
+    return $words
 }
 
 proc CovidStats::dccGetStats { nick idx arg } {

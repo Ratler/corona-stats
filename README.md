@@ -5,6 +5,7 @@ A script that displays realtime statistics about COVID-19 (corona).
 ## Requirements
 
 * Eggdrop >= 1.6.18
+* TCL >= 8.6
 * tcllib (<https://www.tcl.tk/software/tcllib/>)
 * tcltls (<https://core.tcl-lang.org/tcltls/index>)
 
