@@ -24,14 +24,17 @@ namespace eval CovidStats {
     variable files
     set files(countryFile) "scripts/corona-stats/countrylist.txt"
     set files(usStatesFile) "scripts/corona-stats/states.txt"
-    variable ignoreResponseFields [list countryInfo]
+    set files(caProvincesFile) "scripts/corona-stats/provinces.txt"
+    variable ignoreResponseFields [list countryInfo city coordinates]
     variable countryMapping
     variable usStatesMapping
+    variable caProvincesMapping
+
     # Cache data - in seconds, default 3600 seconds (1h)
     variable cacheTime 3600
     variable cache [dict create]
 
-    foreach i [list country usStates] {
+    foreach i [list country usStates caProvinces] {
         if {[file exists $::CovidStats::files(${i}File)]} {
             set fd [open $::CovidStats::files(${i}File) r]
             while { ![eof $fd] } {
@@ -85,6 +88,19 @@ if {[array size ::CovidStats::usStatesMapping] > 0} {
         set cmd [concat $cmd "}"]
         eval $cmd
         bind pub - !coronaus-${k} ::CovidStats::${k}UsStatesGetStats
+    }
+}
+
+if {[array size ::CovidStats::caProvincesMapping] > 0} {
+    foreach k [array names ::CovidStats::caProvincesMapping] {
+        set cmd "proc CovidStats::${k}CaProvinceGetStats "
+        set cmd [concat $cmd "{ nick host handle channel arg } {\n"]
+        set cmd [concat $cmd "set provinceName \$::CovidStats::caProvincesMapping($k);\n"]
+        set cmd [concat $cmd "set data \[::CovidStats::formatOutput \[::CovidStats::getCaProvinceData \$provinceName\]\];\n"]
+        set cmd [concat $cmd "puthelp \"PRIVMSG \$channel :\$data\";\n"]
+        set cmd [concat $cmd "}"]
+        eval $cmd
+        bind pub - !coronaca-${k} ::CovidStats::${k}CaProvinceGetStats
     }
 }
 
@@ -160,6 +176,26 @@ proc CovidStats::getUsStateData { state } {
     }
 }
 
+proc CovidStats::getCaProvinceData { province } {
+    set res [::CovidStats::getCache caProvince]
+
+    if {$res == ""} {
+        set res [::rest::get https://corona.lmao.ninja/jhucsse {}]
+        set res [::rest::format_json $res]
+
+        # Only store Canadian provinces in the cache to speed things up
+        # and to reduce memory usage
+        set res [lmap d $res {expr {[dict get $d country] == "Canada" ? $d : [continue]}}]
+        ::CovidStats::setCache caProvince $res
+    }
+
+    foreach pr $res {
+        if {[dict get $pr province] == $province} {
+            return $pr
+        }
+    }
+}
+
 proc CovidStats::pubGetStats { nick host handle channel arg } {
     set country [::CovidStats::urlEncode $arg]
     set data [::CovidStats::formatOutput [::CovidStats::getData $country ""]]
@@ -206,6 +242,10 @@ proc CovidStats::formatOutput { data } {
             append res "- Updated: [clock format [string range $value 0 end-3] -format {%Y-%m-%d %R}]"
         } elseif {$key == "country" || $key == "state"} {
             append res "- $value "
+        } elseif {$key == "stats"} {
+            dict for {k v} $value {
+                append res "- [::CovidStats::readableText $k]: $v "
+            }
         } else {
             append res "- [::CovidStats::readableText $key]: $value "
         }

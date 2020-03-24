@@ -17,6 +17,8 @@ __!corona-&lt;XX&gt;__ -  Shortcut command to display detailed statistics for a 
 
 __!coronaus-&lt;XX&gt;__ - Display statistics for a US state. XX is replaced by the short state name. Ex: !coronaus-ny for New York, or !coronaus-al for Alabama.
 
+__!coronaca-&lt;XX&gt;__ - Display statistics for a province in Canada. XX is replaced by the short province name. Ex: !coronaca-on for Ontario, or !coronaca-ns for Nova Scotia.
+
 __!coronatop5 [category]__ - Display top 5 country statistics. Provide an optional category to override the default (cases).
 
 __!coronatop5 help__ - Display valid categories.
