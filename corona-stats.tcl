@@ -54,7 +54,7 @@ package require tls
 package require rest
 
 # Setup TLS
-http::register https 443 [list ::tls::socket -autoservername true]
+http::register https 443 [list ::tls::socket -tls1 1 -servername corona.lmao.ninja]
 
 # Bindings
 bind dcc - corona ::CovidStats::dccGetStats
