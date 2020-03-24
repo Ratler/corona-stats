@@ -205,9 +205,9 @@ proc CovidStats::formatOutput { data } {
         if {$key == "updated"} {
             append res "- Updated: [clock format [string range $value 0 end-3] -format {%Y-%m-%d %R}]"
         } elseif {$key == "country" || $key == "state"} {
-            append res "- [dict get $data $key] "
+            append res "- $value "
         } else {
-            append res "- [::CovidStats::readableText $key]: [dict get $data $key] "
+            append res "- [::CovidStats::readableText $key]: $value "
         }
     }
 
