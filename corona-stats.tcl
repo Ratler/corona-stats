@@ -60,7 +60,6 @@ http::register https 443 [list ::tls::socket -autoservername true]
 bind dcc - corona ::CovidStats::dccGetStats
 bind pub - !corona ::CovidStats::pubGetStats
 bind pub - !coronatop5 ::CovidStats::pubGetTop5Stats
-bind pub - !coronaus ::CovidStats::pubGetUsStateStats
 
 # Automatic bindings and generated procs for each country
 if {[array size ::CovidStats::countryMapping] > 0} {
@@ -164,10 +163,6 @@ proc CovidStats::getUsStateData { state } {
 proc CovidStats::pubGetStats { nick host handle channel arg } {
     set data [::CovidStats::formatOutput [::CovidStats::getData $arg ""]]
     puthelp "PRIVMSG $channel :$data"
-}
-
-proc CovidStats::pubGetUsStateStats { nick host handle channel state } {
-    set data [::CovidStats::]
 }
 
 proc CovidStats::pubGetTop5Stats { nick host handle channel arg } {
