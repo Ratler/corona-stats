@@ -1,5 +1,5 @@
 af Afghanistan
-ax Åland Islands
+ax Aland Islands
 al Albania
 dz Algeria
 as American Samoa
@@ -7,7 +7,7 @@ ad Andorra
 ao Angola
 ai Anguilla
 aq Antarctica
-ag Antigua and Barbuda
+ag Antigua And Barbuda
 ar Argentina
 am Armenia
 aw Aruba
@@ -24,21 +24,20 @@ bz Belize
 bj Benin
 bm Bermuda
 bt Bhutan
-bo Bolivia (Plurinational State of)
-bq Bonaire, Sint Eustatius and Saba
-ba Bosnia and Herzegovina
+bo Bolivia
+ba Bosnia And Herzegovina
 bw Botswana
 bv Bouvet Island
 br Brazil
 io British Indian Ocean Territory
-bn Brunei Darussalam
+bn Brunei
 bg Bulgaria
 bf Burkina Faso
 bi Burundi
-cv Cabo Verde
 kh Cambodia
 cm Cameroon
 ca Canada
+cv Cape Verde
 ky Cayman Islands
 cf Central African Republic
 td Chad
@@ -49,15 +48,16 @@ cc Cocos (Keeling) Islands
 co Colombia
 km Comoros
 cg Congo
-cd Congo, Democratic Republic of the
+cd DRC
+cd Congo, Democratic Republic
 ck Cook Islands
 cr Costa Rica
-ci Côte d'Ivoire
+ci Cote D'Ivoire
+ci Ivory Coast
 hr Croatia
 cu Cuba
-cw Curaçao
 cy Cyprus
-cz Czechia
+cz Czech Republic
 dk Denmark
 dj Djibouti
 dm Dominica
@@ -68,7 +68,6 @@ sv El Salvador
 gq Equatorial Guinea
 er Eritrea
 ee Estonia
-sz Eswatini
 et Ethiopia
 fk Falkland Islands (Malvinas)
 fo Faroe Islands
@@ -95,18 +94,18 @@ gn Guinea
 gw Guinea-Bissau
 gy Guyana
 ht Haiti
-hm Heard Island and McDonald Islands
-va Holy See
+hm Heard Island & Mcdonald Islands
+va Vatican City
 hn Honduras
 hk Hong Kong
 hu Hungary
 is Iceland
 in India
 id Indonesia
-ir Iran (Islamic Republic of)
+ir Iran
 iq Iraq
 ie Ireland
-im Isle of Man
+im Isle Of Man
 il Israel
 it Italy
 jm Jamaica
@@ -116,8 +115,7 @@ jo Jordan
 kz Kazakhstan
 ke Kenya
 ki Kiribati
-kp Korea (Democratic People's Republic of)
-kr Korea, Republic of
+kr Korea
 kw Kuwait
 kg Kyrgyzstan
 la Lao People's Democratic Republic
@@ -125,11 +123,13 @@ lv Latvia
 lb Lebanon
 ls Lesotho
 lr Liberia
-ly Libya
+ly Libyan Arab Jamahiriya
 li Liechtenstein
 lt Lithuania
 lu Luxembourg
 mo Macao
+mk Macedonia
+mk North Macedonia
 mg Madagascar
 mw Malawi
 my Malaysia
@@ -142,8 +142,8 @@ mr Mauritania
 mu Mauritius
 yt Mayotte
 mx Mexico
-fm Micronesia (Federated States of)
-md Moldova, Republic of
+fm Micronesia, Federated States Of
+md Moldova
 mc Monaco
 mn Mongolia
 me Montenegro
@@ -155,6 +155,7 @@ na Namibia
 nr Nauru
 np Nepal
 nl Netherlands
+an Netherlands Antilles
 nc New Caledonia
 nz New Zealand
 ni Nicaragua
@@ -162,13 +163,12 @@ ne Niger
 ng Nigeria
 nu Niue
 nf Norfolk Island
-mk North Macedonia
 mp Northern Mariana Islands
 no Norway
 om Oman
 pk Pakistan
 pw Palau
-ps Palestine, State of
+ps Palestine
 pa Panama
 pg Papua New Guinea
 py Paraguay
@@ -179,70 +179,70 @@ pl Poland
 pt Portugal
 pr Puerto Rico
 qa Qatar
-re Réunion
+re Reunion
 ro Romania
-ru Russian Federation
+ru Russia
 rw Rwanda
-bl Saint Barthélemy
-sh Saint Helena, Ascension and Tristan da Cunha
-kn Saint Kitts and Nevis
+bl Saint Barthelemy
+sh Saint Helena
+kn Saint Kitts And Nevis
 lc Saint Lucia
-mf Saint Martin (French part)
-pm Saint Pierre and Miquelon
-vc Saint Vincent and the Grenadines
+mf Saint Martin
+pm Saint Pierre And Miquelon
+vc Saint Vincent And Grenadines
 ws Samoa
 sm San Marino
-st Sao Tome and Principe
+st Sao Tome And Principe
 sa Saudi Arabia
 sn Senegal
 rs Serbia
 sc Seychelles
 sl Sierra Leone
 sg Singapore
-sx Sint Maarten (Dutch part)
 sk Slovakia
 si Slovenia
 sb Solomon Islands
 so Somalia
 za South Africa
-gs South Georgia and the South Sandwich Islands
-ss South Sudan
+gs South Georgia And Sandwich Isl.
 es Spain
 lk Sri Lanka
 sd Sudan
 sr Suriname
-sj Svalbard and Jan Mayen
+sj Svalbard And Jan Mayen
+sz Swaziland
 se Sweden
 ch Switzerland
-sy Syrian Arab Republic
-tw Taiwan, Province of China
+sy Syria
+tw Taiwan
 tj Tajikistan
-tz Tanzania, United Republic of
+tz Tanzania
 th Thailand
 tl Timor-Leste
 tg Togo
 tk Tokelau
 to Tonga
-tt Trinidad and Tobago
+tt Trinidad And Tobago
 tn Tunisia
 tr Turkey
 tm Turkmenistan
-tc Turks and Caicos Islands
+tc Turks And Caicos Islands
 tv Tuvalu
 ug Uganda
 ua Ukraine
-ae United Arab Emirates
-gb United Kingdom of Great Britain and Northern Ireland
-us United States of America
-um United States Minor Outlying Islands
+ae UAE
+gb United Kingdom
+us United States
+um United States Outlying Islands
 uy Uruguay
 uz Uzbekistan
 vu Vanuatu
-ve Venezuela (Bolivarian Republic of)
+ve Venezuela
 vn Viet Nam
-vg Virgin Islands (British)
-vi Virgin Islands (U.S.)
-wf Wallis and Futuna
+vn Vietnam
+vg Virgin Islands, British
+vi Virgin Islands, U.S.
+wf Wallis And Futuna
 eh Western Sahara
 ye Yemen
 zm Zambia
