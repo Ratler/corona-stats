@@ -161,7 +161,8 @@ proc CovidStats::getUsStateData { state } {
 }
 
 proc CovidStats::pubGetStats { nick host handle channel arg } {
-    set data [::CovidStats::formatOutput [::CovidStats::getData $arg ""]]
+    set country [::CovidStats::urlEncode $arg]
+    set data [::CovidStats::formatOutput [::CovidStats::getData $country ""]]
     puthelp "PRIVMSG $channel :$data"
 }
 
