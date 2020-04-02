@@ -222,7 +222,7 @@ proc CovidStats::pubGetTop5Stats { nick host handle channel arg } {
 
     for {set c 0} {$c < 5} {incr c} {
         set stats [lindex $data $c]
-        append response "[expr $c + 1]. [dict get $stats country]: [dict get $stats $arg]"
+        append response "\00304[expr $c + 1]\003. \002[dict get $stats country]\002:\00307 [dict get $stats $arg]\003"
         if {$c < 4} {
             append response " - "
         }
@@ -239,19 +239,44 @@ proc CovidStats::formatOutput { data } {
             continue
         }
         if {$key == "updated"} {
-            append res "- Updated: [clock format [string range $value 0 end-3] -format {%Y-%m-%d %R}]"
+            append res "- Updated:\00311 [clock format [string range $value 0 end-3] -format {%Y-%m-%d %R}]\003 "
         } elseif {$key == "country" || $key == "state"} {
-            append res "- $value "
+            append res "- \00312$value\003 "
         } elseif {$key == "stats"} {
             dict for {k v} $value {
-                append res "- [::CovidStats::readableText $k]: $v "
+                append res "[::CovidStats::ColorTheme $k $v]"
             }
         } else {
-            append res "- [::CovidStats::readableText $key]: $value "
+            append res "[::CovidStats::ColorTheme $key $value]"
         }
     }
 
     return $res
+}
+
+proc CovidStats::ColorTheme { key value } {
+    set k1 [::CovidStats::readableText $key]
+    if {($k1 == "Cases") || ($k1 == "Confirmed")} {
+      return "- $k1:\00307 $value \003"
+    } elseif {$k1 == "Today Cases"} {
+      return "- $k1:\00308 $value \003"
+    } elseif {($k1 == "Deaths") || ($k1 == "Deaths Per One Million")} {
+      return "- $k1:\00304 $value \003"
+    } elseif {$k1 == "Recovered"} {
+      return "- $k1:\00303 $value \003"
+    } elseif {$k1 == "Active"} {
+      return "- $k1:\00313 $value \003"
+    } elseif {($k1 == "Updated") || ($k1 == "Cases Per One Million") || ($k1 == "Updated At")} {
+      return "- $k1:\00311 $value \003"
+    } elseif {($k1 == "Affected Countries") || ($k1 == "Critical")} {
+      return "- $k1:\00305 $value \003"
+    } elseif {$k1 == "Today Deaths"} {
+      return "- $k1:\00305 $value \003"
+    } elseif {$k1 == "Province"} {
+      return "- $k1:\00312 $value \003"
+    } else {
+      return "- $k1: $value "
+    }
 }
 
 proc CovidStats::readableText { text } {
