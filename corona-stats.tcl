@@ -20,7 +20,7 @@
 
 if {[namespace exists CovidStats]} {namespace delete CovidStats}
 namespace eval CovidStats {
-    variable version "0.8"
+    variable version "1.0.0"
     variable files
     set files(CountryFile) "scripts/corona-stats/countrylist.txt"
     set files(UsStateFile) "scripts/corona-stats/states.txt"
