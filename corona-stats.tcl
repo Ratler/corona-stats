@@ -22,19 +22,19 @@ if {[namespace exists CovidStats]} {namespace delete CovidStats}
 namespace eval CovidStats {
     variable version "0.8"
     variable files
-    set files(countryFile) "scripts/corona-stats/countrylist.txt"
-    set files(usStatesFile) "scripts/corona-stats/states.txt"
-    set files(caProvincesFile) "scripts/corona-stats/provinces.txt"
+    set files(CountryFile) "scripts/corona-stats/countrylist.txt"
+    set files(UsStateFile) "scripts/corona-stats/states.txt"
+    set files(CaProvinceFile) "scripts/corona-stats/provinces.txt"
     variable ignoreResponseFields [list countryInfo city coordinates]
     variable countryMapping
-    variable usStatesMapping
-    variable caProvincesMapping
+    variable usStateMapping
+    variable caProvinceMapping
 
     # Cache data - in seconds, default 3600 seconds (1h)
     variable cacheTime 3600
     variable cache [dict create]
 
-    foreach i [list country usStates caProvinces] {
+    foreach i [list Country UsState CaProvince] {
         if {[file exists $::CovidStats::files(${i}File)]} {
             set fd [open $::CovidStats::files(${i}File) r]
             while { ![eof $fd] } {
@@ -73,43 +73,30 @@ setudef flag corona-stats
 setudef flag corona-stats.color
 setudef flag corona-stats.cacheTimeout
 
-# Automatic bindings and generated procs for each country
-if {[array size ::CovidStats::countryMapping] > 0} {
-    foreach k [array names ::CovidStats::countryMapping] {
-        set cmd "proc CovidStats::${k}getStats "
-        set cmd [concat $cmd "{ nick host handle channel arg } {\n"]
-        set cmd [concat $cmd "set countryName \[::CovidStats::urlEncode \$::CovidStats::countryMapping($k)\];\n"]
-        set cmd [concat $cmd "set data \[::CovidStats::formatOutput \[::CovidStats::getData \$countryName\ \"\"]\];\n"]
-        set cmd [concat $cmd "puthelp \"PRIVMSG \$channel :\$data\";\n"]
-        set cmd [concat $cmd "}"]
-        eval $cmd
-        bind pub - !corona-${k} ::CovidStats::${k}getStats
-    }
-}
-
-if {[array size ::CovidStats::usStatesMapping] > 0} {
-    foreach k [array names ::CovidStats::usStatesMapping] {
-        set cmd "proc CovidStats::${k}UsStatesGetStats "
-        set cmd [concat $cmd "{ nick host handle channel arg } {\n"]
-        set cmd [concat $cmd "set stateName \$::CovidStats::usStatesMapping($k);\n"]
-        set cmd [concat $cmd "set data \[::CovidStats::formatOutput \[::CovidStats::getUsStateData \$stateName\]\];\n"]
-        set cmd [concat $cmd "puthelp \"PRIVMSG \$channel :\$data\";\n"]
-        set cmd [concat $cmd "}"]
-        eval $cmd
-        bind pub - !coronaus-${k} ::CovidStats::${k}UsStatesGetStats
-    }
-}
-
-if {[array size ::CovidStats::caProvincesMapping] > 0} {
-    foreach k [array names ::CovidStats::caProvincesMapping] {
-        set cmd "proc CovidStats::${k}CaProvinceGetStats "
-        set cmd [concat $cmd "{ nick host handle channel arg } {\n"]
-        set cmd [concat $cmd "set provinceName \$::CovidStats::caProvincesMapping($k);\n"]
-        set cmd [concat $cmd "set data \[::CovidStats::formatOutput \[::CovidStats::getCaProvinceData \$provinceName\]\];\n"]
-        set cmd [concat $cmd "puthelp \"PRIVMSG \$channel :\$data\";\n"]
-        set cmd [concat $cmd "}"]
-        eval $cmd
-        bind pub - !coronaca-${k} ::CovidStats::${k}CaProvinceGetStats
+# Automatic bindings and generated procs
+foreach i [list Country UsState CaProvince] {
+    if {[array size ::CovidStats::${i}Mapping] > 0} {
+        foreach k [array names ::CovidStats::${i}Mapping] {
+            set cmd "proc CovidStats::${k}get${i}Stats "
+            set cmd [concat $cmd "{ nick host handle channel arg } {\n"]
+            set cmd [concat $cmd "if {\"$i\" == \"Country\"} {;\n"]
+            set cmd [concat $cmd "set name \[::CovidStats::urlEncode \$::CovidStats::${i}Mapping($k)\];\n"]
+            set cmd [concat $cmd "} else {;\n"]
+            set cmd [concat $cmd "set name \$::CovidStats::${i}Mapping($k);\n"]
+            set cmd [concat $cmd "};\n"]
+            set cmd [concat $cmd "set data \[::CovidStats::formatOutput \[::CovidStats::get${i}Data \$name\ \"\"]\];\n"]
+            set cmd [concat $cmd "puthelp \"PRIVMSG \$channel :\$data\";\n"]
+            set cmd [concat $cmd "}"]
+            eval $cmd
+            if {$i == "Country"} {
+                set bindCmd "!corona-${k}"
+            } elseif {$i == "UsState"} {
+                set bindCmd "!coronaus-${k}"
+            } else {
+                set bindCmd "!coronaca-${k}"
+            }
+            bind pub - $bindCmd ::CovidStats::${k}get${i}Stats
+        }
     }
 }
 
@@ -147,7 +134,7 @@ proc CovidStats::sortCountryData { data sortby } {
     return $res
 }
 
-proc CovidStats::getData { country sortby } {
+proc CovidStats::getCountryData { country sortby } {
     if {$country == ""} {
         set res [::rest::get https://corona.lmao.ninja/all {}]
         set res [::rest::format_json $res]
@@ -169,7 +156,7 @@ proc CovidStats::getData { country sortby } {
     return $res
 }
 
-proc CovidStats::getUsStateData { state } {
+proc CovidStats::getUsStateData { state ignored } {
     set res [::CovidStats::getCache usState]
 
     if {$res == ""} {
@@ -185,7 +172,7 @@ proc CovidStats::getUsStateData { state } {
     }
 }
 
-proc CovidStats::getCaProvinceData { province } {
+proc CovidStats::getCaProvinceData { province ignored } {
     set res [::CovidStats::getCache caProvince]
 
     if {$res == ""} {
@@ -207,7 +194,7 @@ proc CovidStats::getCaProvinceData { province } {
 
 proc CovidStats::pubGetStats { nick host handle channel arg } {
     set country [::CovidStats::urlEncode $arg]
-    set data [::CovidStats::formatOutput [::CovidStats::getData $country ""]]
+    set data [::CovidStats::formatOutput [::CovidStats::getCountryData $country ""]]
     puthelp "PRIVMSG $channel :$data"
 }
 
@@ -226,7 +213,7 @@ proc CovidStats::pubGetTop5Stats { nick host handle channel arg } {
         set arg "cases"
     }
 
-    set data [::CovidStats::getData all $arg]
+    set data [::CovidStats::getCountryData all $arg]
     set response "Covid-19 stats (Top 5 - $arg): "
 
     for {set c 0} {$c < 5} {incr c} {
