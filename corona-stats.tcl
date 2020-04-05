@@ -53,16 +53,25 @@ namespace eval CovidStats {
 # Packages
 package require Tcl 8.6
 package require http
-package require tls
 package require rest
 
 # Setup TLS
-http::register https 443 [list ::tls::socket -tls1 1 -servername corona.lmao.ninja]
+set tlsVer [package require tls]
+if {[package vcompare $tlsVer 1.7.11] >= 0} {
+    http::register https 443 [list ::tls::socket -autoservername true]
+} else {
+    http::register https 443 [list ::tls::socket -tls1 1 -servername corona.lmao.ninja]
+}
 
 # Bindings
 bind dcc - corona ::CovidStats::dccGetStats
 bind pub - !corona ::CovidStats::pubGetStats
 bind pub - !coronatop5 ::CovidStats::pubGetTop5Stats
+
+# Channel flags
+setudef flag corona-stats
+setudef flag corona-stats.color
+setudef flag corona-stats.cacheTimeout
 
 # Automatic bindings and generated procs for each country
 if {[array size ::CovidStats::countryMapping] > 0} {
