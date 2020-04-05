@@ -30,6 +30,9 @@ namespace eval CovidStats {
     variable usStateMapping
     variable caProvinceMapping
 
+    # Colors, set to false to disable colors
+    variable enableColor false
+
     # Cache data - in seconds, default 3600 seconds (1h)
     variable cacheTime 3600
     variable cache [dict create]
@@ -67,11 +70,6 @@ if {[package vcompare $tlsVer 1.7.11] >= 0} {
 bind dcc - corona ::CovidStats::dccGetStats
 bind pub - !corona ::CovidStats::pubGetStats
 bind pub - !coronatop5 ::CovidStats::pubGetTop5Stats
-
-# Channel flags
-setudef flag corona-stats
-setudef flag corona-stats.color
-setudef flag corona-stats.cacheTimeout
 
 # Automatic bindings and generated procs
 foreach i [list Country UsState CaProvince] {
@@ -218,7 +216,11 @@ proc CovidStats::pubGetTop5Stats { nick host handle channel arg } {
 
     for {set c 0} {$c < 5} {incr c} {
         set stats [lindex $data $c]
-        append response "\00304[expr $c + 1]\003. \002[dict get $stats country]\002:\00307 [dict get $stats $arg]\003"
+        if {$::CovidStats::enableColor} {
+            append response "\00304[expr $c + 1]\003. \002[dict get $stats country]\002:\00307 [dict get $stats $arg]\003"
+        } else {
+            append response "[expr $c + 1]. [dict get $stats country]: [dict get $stats $arg]"
+        }
         if {$c < 4} {
             append response " - "
         }
@@ -235,9 +237,7 @@ proc CovidStats::formatOutput { data } {
             continue
         }
         if {$key == "updated"} {
-            append res "- Updated:\00311 [clock format [string range $value 0 end-3] -format {%Y-%m-%d %R}]\003 "
-        } elseif {$key == "country" || $key == "state"} {
-            append res "- \00312$value\003 "
+            append res "- Updated: [clock format [string range $value 0 end-3] -format {%Y-%m-%d %R}] "
         } elseif {$key == "stats"} {
             dict for {k v} $value {
                 append res "[::CovidStats::ColorTheme $k $v]"
@@ -252,27 +252,33 @@ proc CovidStats::formatOutput { data } {
 
 proc CovidStats::ColorTheme { key value } {
     set k1 [::CovidStats::readableText $key]
-    if {($k1 == "Cases") || ($k1 == "Confirmed")} {
-      return "- $k1:\00307 $value \003"
-    } elseif {$k1 == "Today Cases"} {
-      return "- $k1:\00308 $value \003"
-    } elseif {($k1 == "Deaths") || ($k1 == "Deaths Per One Million")} {
-      return "- $k1:\00304 $value \003"
-    } elseif {$k1 == "Recovered"} {
-      return "- $k1:\00303 $value \003"
-    } elseif {$k1 == "Active"} {
-      return "- $k1:\00313 $value \003"
-    } elseif {($k1 == "Updated") || ($k1 == "Cases Per One Million") || ($k1 == "Updated At")} {
-      return "- $k1:\00311 $value \003"
-    } elseif {($k1 == "Affected Countries") || ($k1 == "Critical")} {
-      return "- $k1:\00305 $value \003"
-    } elseif {$k1 == "Today Deaths"} {
-      return "- $k1:\00305 $value \003"
-    } elseif {$k1 == "Province"} {
-      return "- $k1:\00312 $value \003"
-    } else {
-      return "- $k1: $value "
+    if {$::CovidStats::enableColor} {
+        if {($k1 == "Cases") || ($k1 == "Confirmed")} {
+            set value "\00307$value\003"
+        } elseif {$k1 == "Country" || $k1 == "State"} {
+            set value "\00300$value\003"
+        } elseif {$k1 == "Today Cases"} {
+            set value "\00308$value\003"
+        } elseif {($k1 == "Deaths") || ($k1 == "Deaths Per One Million")} {
+            set value "\00304$value\003"
+        } elseif {$k1 == "Recovered"} {
+            set value "\00303$value\003"
+        } elseif {$k1 == "Active"} {
+            set value "\00313$value\003"
+        } elseif {($k1 == "Cases Per One Million")} {
+            set value "\00311$value\003"
+        } elseif {($k1 == "Affected Countries") || ($k1 == "Critical")} {
+           set value "\00305$value\003"
+        } elseif {$k1 == "Today Deaths"} {
+            set value "\00305$value\003"
+        } elseif {$k1 == "Province"} {
+            set value "\00312$value\003"
+        }
     }
+    if {$k1 == "Country" || $k1 == "State" } {
+        return "- $value "
+    }
+    return "- $k1: $value "
 }
 
 proc CovidStats::readableText { text } {
