@@ -180,7 +180,7 @@ proc CovidStats::getCaProvinceData { province } {
     set res [::CovidStats::getCache caProvince]
 
     if {$res == ""} {
-        set res [::rest::get https://corona.lmao.ninja/jhucsse {}]
+        set res [::rest::get https://corona.lmao.ninja/v2/jhucsse {}]
         set res [::rest::format_json $res]
 
         # Only store Canadian provinces in the cache to speed things up
