@@ -134,12 +134,12 @@ proc CovidStats::sortCountryData { data sortby } {
 
 proc CovidStats::getCountryData { country sortby } {
     if {$country == ""} {
-        set res [::rest::get https://corona.lmao.ninja/all {}]
+        set res [::rest::get https://corona.lmao.ninja/v2/all {}]
         set res [::rest::format_json $res]
     } elseif {$country == "all"} {
         set res [::CovidStats::getCache countryAll]
         if {$res == ""} {
-            set res [::rest::get https://corona.lmao.ninja/countries sort=$sortby]
+            set res [::rest::get https://corona.lmao.ninja/v2/countries sort=$sortby]
             set res [::rest::format_json $res]
             ::CovidStats::setCache countryAll $res
         } else {
@@ -147,7 +147,7 @@ proc CovidStats::getCountryData { country sortby } {
             set res [::CovidStats::sortCountryData $res $sortby]
         }
     } else {
-        set res [::rest::get https://corona.lmao.ninja/countries/$country {}]
+        set res [::rest::get https://corona.lmao.ninja/v2/countries/$country {}]
         set res [::rest::format_json $res]
     }
 
@@ -158,7 +158,7 @@ proc CovidStats::getUsStateData { state ignored } {
     set res [::CovidStats::getCache usState]
 
     if {$res == ""} {
-        set res [::rest::get https://corona.lmao.ninja/states {}]
+        set res [::rest::get https://corona.lmao.ninja/v2/states {}]
         set res [::rest::format_json $res]
         ::CovidStats::setCache usState $res
     }
