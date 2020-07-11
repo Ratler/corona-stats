@@ -1,5 +1,5 @@
 ##
-# corona-stats.tcl  Version 1.0.1  Author Stefan Wold <ratler@stderr.eu>
+# corona-stats.tcl  Version 1.0.2  Author Stefan Wold <ratler@stderr.eu>
 ###
 # LICENSE:
 # Copyright (C) 2020  Stefan Wold <ratler@stderr.eu>
@@ -20,7 +20,7 @@
 
 if {[namespace exists CovidStats]} {namespace delete CovidStats}
 namespace eval CovidStats {
-    variable version "1.0.1"
+    variable version "1.0.2"
     variable files
     set files(CountryFile) "scripts/corona-stats/countrylist.txt"
     set files(UsStateFile) "scripts/corona-stats/states.txt"
@@ -63,7 +63,7 @@ set tlsVer [package require tls]
 if {[package vcompare $tlsVer 1.7.11] >= 0} {
     http::register https 443 [list ::tls::socket -autoservername true]
 } else {
-    http::register https 443 [list ::tls::socket -tls1 1 -servername corona.lmao.ninja]
+    http::register https 443 [list ::tls::socket -tls1 1 -servername disease.sh]
 }
 
 # Bindings
@@ -134,12 +134,12 @@ proc CovidStats::sortCountryData { data sortby } {
 
 proc CovidStats::getCountryData { country sortby } {
     if {$country == ""} {
-        set res [::rest::get https://corona.lmao.ninja/v2/all {}]
+        set res [::rest::get https://disease.sh/v2/all {}]
         set res [::rest::format_json $res]
     } elseif {$country == "all"} {
         set res [::CovidStats::getCache countryAll]
         if {$res == ""} {
-            set res [::rest::get https://corona.lmao.ninja/v2/countries sort=$sortby]
+            set res [::rest::get https://disease.sh/v2/countries sort=$sortby]
             set res [::rest::format_json $res]
             ::CovidStats::setCache countryAll $res
         } else {
@@ -147,7 +147,7 @@ proc CovidStats::getCountryData { country sortby } {
             set res [::CovidStats::sortCountryData $res $sortby]
         }
     } else {
-        set res [::rest::get https://corona.lmao.ninja/v2/countries/$country {}]
+        set res [::rest::get https://disease.sh/v2/countries/$country {}]
         set res [::rest::format_json $res]
     }
 
@@ -158,7 +158,7 @@ proc CovidStats::getUsStateData { state ignored } {
     set res [::CovidStats::getCache usState]
 
     if {$res == ""} {
-        set res [::rest::get https://corona.lmao.ninja/v2/states {}]
+        set res [::rest::get https://disease.sh/v2/states {}]
         set res [::rest::format_json $res]
         ::CovidStats::setCache usState $res
     }
@@ -174,7 +174,7 @@ proc CovidStats::getCaProvinceData { province ignored } {
     set res [::CovidStats::getCache caProvince]
 
     if {$res == ""} {
-        set res [::rest::get https://corona.lmao.ninja/v2/jhucsse {}]
+        set res [::rest::get https://disease.sh/v2/jhucsse {}]
         set res [::rest::format_json $res]
 
         # Only store Canadian provinces in the cache to speed things up
